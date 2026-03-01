@@ -1,0 +1,112 @@
+/* ═══════════════════════════════════════════════════════════════
+   CMDB PLUS ULTRA — Estilos Globais
+   Arquivo: frontend/src/css/globals.css
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Design Tokens: Tema Escuro ──────────────────────────────── */
+:root, [data-theme="dark"] {
+  --mono:      'JetBrains Mono', monospace;
+  --display:   'Syne', sans-serif;
+  --body:      'DM Sans', sans-serif;
+  --radius:    3px;
+  --transition: .18s cubic-bezier(.4,0,.2,1);
+
+  --bg:        #080b10;
+  --bg2:       #0b0f16;
+  --surface:   #0e1420;
+  --panel:     #111826;
+  --elevated:  #161e2e;
+  --card:      #1a2234;
+  --border:    #1e2d47;
+  --border2:   #263852;
+  --border3:   #2e4266;
+  --accent:    #38bdf8;
+  --accent2:   #0ea5e9;
+  --accent3:   #0284c7;
+  --green:     #34d399;
+  --green2:    #10b981;
+  --amber:     #fbbf24;
+  --red:       #f87171;
+  --purple:    #c084fc;
+  --pink:      #f472b6;
+  --teal:      #2dd4bf;
+  --text:      #e2eaf7;
+  --text2:     #94a8c7;
+  --text3:     #4a6080;
+  --muted:     #3a5070;
+  --muted2:    #223040;
+  --shadow:    rgba(0,0,0,.6);
+  --glow-a:    rgba(56,189,248,.15);
+  --glow-g:    rgba(52,211,153,.15);
+  --glow-t:    rgba(45,212,191,.15);
+  --overlay:   rgba(8,11,16,.85);
+}
+
+/* ── Design Tokens: Tema Claro ───────────────────────────────── */
+[data-theme="light"] {
+  --bg:        #f0f4f8;
+  --bg2:       #e8edf3;
+  --surface:   #ffffff;
+  --panel:     #f8fafc;
+  --elevated:  #ffffff;
+  --card:      #ffffff;
+  --border:    #d4dde9;
+  --border2:   #c0cedd;
+  --border3:   #a8bcce;
+  --accent:    #0284c7;
+  --accent2:   #0369a1;
+  --green:     #059669;
+  --amber:     #d97706;
+  --red:       #dc2626;
+  --purple:    #7c3aed;
+  --teal:      #0d9488;
+  --text:      #1e293b;
+  --text2:     #475569;
+  --text3:     #94a3b8;
+  --muted:     #94a3b8;
+  --muted2:    #e2e8f0;
+  --shadow:    rgba(0,0,0,.12);
+  --glow-a:    rgba(2,132,199,.08);
+  --glow-g:    rgba(5,150,105,.08);
+  --glow-t:    rgba(13,148,136,.08);
+  --overlay:   rgba(240,244,248,.9);
+}
+
+/* ── Reset e Base ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background var(--transition), color var(--transition);
+}
+
+/* Scanlines no tema escuro */
+[data-theme="dark"] body::before {
+  content: '';
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg, transparent 0, transparent 3px,
+    rgba(0,0,0,.06) 3px, rgba(0,0,0,.06) 4px
+  );
+  z-index: 9000;
+}
+
+/* ── Scrollbar customizada ────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border3); }
+
+/* ── Utilitários comuns ───────────────────────────────────────── */
+.hidden { display: none !important; }
+.flex   { display: flex; }
+.flex-col { display: flex; flex-direction: column; }
+.gap-2  { gap: 8px; }
+.gap-4  { gap: 16px; }
+.grow   { flex: 1; }

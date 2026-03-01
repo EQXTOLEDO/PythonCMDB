@@ -1,0 +1,256 @@
+/* ═══════════════════════════════════════════════════════════════
+   CMDB PLUS ULTRA — Estilos do Terminal SSH
+   Arquivo: frontend/src/css/terminal.css
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Container principal do terminal ─────────────────────────── */
+.terminal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  animation: fadeIn .15s ease;
+}
+
+.terminal-window {
+  width: min(95vw, 1100px);
+  height: min(90vh, 720px);
+  background: #0a0e17;
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 80px rgba(0,0,0,.8), 0 0 0 1px rgba(56,189,248,.08);
+  overflow: hidden;
+}
+
+/* ── Barra de título do terminal ─────────────────────────────── */
+.terminal-titlebar {
+  height: 38px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 8px;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+/* Botões estilo macOS */
+.term-btn { width: 12px; height: 12px; border-radius: 50%; border: none; cursor: pointer; }
+.term-btn-close  { background: #ff5f57; }
+.term-btn-min    { background: #febc2e; }
+.term-btn-max    { background: #28c840; }
+
+.terminal-host-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+  flex: 1;
+  text-align: center;
+}
+
+/* ── Área principal: terminal + painel de snippets ───────────── */
+.terminal-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── xterm.js ────────────────────────────────────────────────── */
+.terminal-xterm-wrap {
+  flex: 1;
+  padding: 8px;
+  overflow: hidden;
+  background: #0a0e17;
+}
+
+/* ── Painel lateral de snippets ──────────────────────────────── */
+.terminal-snippets {
+  width: 280px;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: width .2s ease;
+}
+
+.terminal-snippets.collapsed {
+  width: 0;
+  overflow: hidden;
+  border-left: none;
+}
+
+.snip-panel-header {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.snip-panel-search {
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.snip-panel-search input {
+  width: 100%;
+  padding: 6px 8px;
+  background: var(--elevated);
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 11px;
+  outline: none;
+}
+
+.snip-panel-search input:focus {
+  border-color: var(--purple);
+}
+
+.snip-panel-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Card individual de snippet no painel SSH */
+.snip-ssh-card {
+  padding: 8px 10px;
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.snip-ssh-card:hover {
+  border-color: var(--purple);
+  background: rgba(192,132,252,.05);
+}
+
+.snip-ssh-card-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.snip-ssh-card-preview {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.snip-ssh-card-inject {
+  margin-top: 6px;
+  padding: 3px 8px;
+  background: rgba(192,132,252,.15);
+  border: 1px solid rgba(192,132,252,.3);
+  border-radius: 2px;
+  color: var(--purple);
+  font-family: var(--mono);
+  font-size: 10px;
+  cursor: pointer;
+  width: 100%;
+  text-align: center;
+}
+
+.snip-ssh-card-inject:hover {
+  background: rgba(192,132,252,.25);
+}
+
+/* ── Barra inferior de status ────────────────────────────────── */
+.terminal-statusbar {
+  height: 24px;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 16px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  flex-shrink: 0;
+}
+
+.term-status-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px var(--green);
+}
+.term-status-dot.disconnected { background: var(--red); box-shadow: 0 0 6px var(--red); }
+.term-status-dot.connecting   { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+
+/* ── Modal de login SSH ──────────────────────────────────────── */
+.ssh-login-form {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 400px;
+  margin: auto;
+}
+
+.ssh-login-title {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--accent);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.ssh-field { display: flex; flex-direction: column; gap: 5px; }
+.ssh-field label { font-family: var(--mono); font-size: 10px; color: var(--text3); letter-spacing: .5px; text-transform: uppercase; }
+.ssh-field input,
+.ssh-field select {
+  padding: 8px 10px;
+  background: var(--elevated);
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  outline: none;
+  transition: border-color .15s;
+}
+.ssh-field input:focus { border-color: var(--accent); }
+
+.ssh-connect-btn {
+  padding: 10px;
+  background: var(--accent3);
+  border: none;
+  border-radius: 3px;
+  color: white;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: background .15s;
+}
+.ssh-connect-btn:hover { background: var(--accent2); }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
