@@ -11,6 +11,7 @@
 const SSHTerminal = (() => {
 
   let _overlay    = null;
+  let _mountedEl  = null;
   let _terminal   = null;
   let _fitAddon   = null;
   let _ws         = null;
@@ -238,6 +239,48 @@ const SSHTerminal = (() => {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+
+  function _buildEmbeddedUI(container, server) {
+    container.innerHTML = `
+      <div class="terminal-window" style="position:relative;inset:auto;height:100%;max-width:none;max-height:none;border:none;box-shadow:none;display:flex;flex-direction:column;">
+        <div class="terminal-titlebar">
+          <span class="terminal-host-label">🔐 SSH — ${_esc(server.name || server.host || '?')} @ ${_esc(server.host||'')}:${server.sshPort||22}</span>
+          <button id="term-snip-toggle" style="background:transparent;border:1px solid var(--border2);border-radius:3px;color:var(--text3);font-family:var(--mono);font-size:10px;padding:3px 8px;cursor:pointer;">{ } snippets</button>
+        </div>
+        <div class="terminal-body" style="min-height:0;flex:1;">
+          <div class="terminal-xterm-wrap" id="xterm-container"></div>
+          <div class="terminal-snippets collapsed" id="snip-sidebar">
+            <div class="snip-panel-header"><span>📋 Snippets</span><span id="snip-count" style="margin-left:auto;color:var(--purple)">0</span></div>
+            <div class="snip-panel-search"><input type="text" id="snip-ssh-search" placeholder="Buscar snippet..."></div>
+            <div class="snip-panel-list" id="snip-ssh-list"></div>
+          </div>
+        </div>
+        <div class="terminal-statusbar">
+          <span class="term-status-dot connecting" id="term-status-dot"></span>
+          <span id="term-status-label">Conectando...</span>
+        </div>
+      </div>`;
+
+    _mountedEl = container;
+    _snipList = container.querySelector('#snip-ssh-list');
+
+    const sidebar = container.querySelector('#snip-sidebar');
+    container.querySelector('#term-snip-toggle').addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      setTimeout(() => { if (_fitAddon) _fitAddon.fit(); }, 220);
+    });
+
+    const searchInput = container.querySelector('#snip-ssh-search');
+    _snipSearch = searchInput;
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.trim();
+      if (!q) { _renderSnippetList(_snipData); return; }
+      _requestSnippets(q);
+    });
+
+    return container.querySelector('#xterm-container');
+  }
+
   function _buildUI(server) {
     const overlay = document.createElement('div');
     overlay.className = 'terminal-overlay';
@@ -319,6 +362,16 @@ const SSHTerminal = (() => {
       _connectWS(server, credentials);
     },
 
+
+    openEmbedded(container, server, credentials) {
+      if (!container) return;
+      if (_overlay || _mountedEl) this.close();
+      _currentServer = server;
+      const termContainer = _buildEmbeddedUI(container, server);
+      _initXterm(termContainer);
+      _connectWS(server, credentials);
+    },
+
     close() {
       window.removeEventListener('resize', _onWindowResize);
       if (_ws) { try { _ws.send(JSON.stringify({ type: 'disconnect' })); } catch {} _ws.close(); _ws = null; }
@@ -327,6 +380,7 @@ const SSHTerminal = (() => {
         if (_overlay._escHandler) document.removeEventListener('keydown', _overlay._escHandler);
         _overlay.remove(); _overlay = null;
       }
+      if (_mountedEl) { _mountedEl.innerHTML = ''; _mountedEl = null; }
       _connected = false;
       _currentServer = null;
       _snipData = [];
