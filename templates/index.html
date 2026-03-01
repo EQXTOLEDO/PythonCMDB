@@ -607,6 +607,52 @@ header {
   min-height: calc(100vh - 62px);
 }
 
+.inv-tree-panel {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.inv-tree-header {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+#inv-tree-search {
+  background: var(--panel);
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 7px 9px;
+}
+#inv-tree-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px;
+}
+.inv-tree-group { margin-bottom: 10px; }
+.inv-tree-group-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.inv-tree-item {
+  display: flex; align-items: center; gap: 7px;
+  padding: 6px 8px; border: 1px solid transparent; cursor: pointer;
+  font-family: var(--mono); font-size: 11px; color: var(--text2);
+}
+.inv-tree-item:hover { border-color: var(--border2); background: var(--elevated); }
+.inv-tree-item.active { border-color: var(--accent); color: var(--accent); }
+.inv-tree-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
 .form-panel {
   background: var(--surface);
   border-right: 1px solid var(--border);
@@ -1538,7 +1584,7 @@ td.ip-html { color: var(--teal); }
 
 @media (max-width: 900px) {
   .inventory-layout { grid-template-columns: 1fr; }
-  .form-panel { border-right: none; border-bottom: 1px solid var(--border); max-height: 50vh; }
+  .form-panel, .inv-tree-panel { border-right: none; border-bottom: 1px solid var(--border); max-height: 50vh; }
   .dash-row { grid-template-columns: 1fr; }
   .tags-section { grid-template-columns: 1fr; }
 }
@@ -2797,8 +2843,17 @@ tbody tr:hover td.hostname {
 <div class="page" id="page-inventory">
   <div class="inventory-layout">
 
-    <!-- FORM PANEL -->
-    <aside class="form-panel" id="main-form-panel">
+    <!-- TREE PANEL -->
+    <aside class="inv-tree-panel" id="inv-tree-panel">
+      <div class="inv-tree-header">
+        <div class="v-tree-title">◫ Inventory Tree</div>
+        <input id="inv-tree-search" placeholder="filtrar account/host..." oninput="invTreeRender()"/>
+      </div>
+      <div id="inv-tree-body"></div>
+    </aside>
+
+    <!-- FORM PANEL (legacy hidden) -->
+    <aside class="form-panel" id="main-form-panel" style="display:none">
 
       <!-- ── MODE TOGGLE ── -->
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
@@ -3015,7 +3070,7 @@ tbody tr:hover td.hostname {
     <!-- TABLE PANEL -->
     <main class="table-panel">
 
-      <div class="table-toolbar">
+      <div class="table-toolbar" id="inventory-table-toolbar">
         <div class="toolbar-search">
           <input id="search" placeholder="hostname, IP, URL, account, tag..." oninput="render()"/>
         </div>
@@ -3036,7 +3091,18 @@ tbody tr:hover td.hostname {
         </div>
       </div>
 
-      <div class="table-wrap">
+      <div id="inventory-terminal-panel" style="display:none;flex-direction:column;height:100%;min-height:0;border:1px solid var(--border);background:var(--bg2)">
+        <div id="inventory-terminal-bar" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--text3)">
+          <span class="v-term-dot vd-red"></span>
+          <span class="v-term-dot vd-yellow"></span>
+          <span class="v-term-dot vd-green"></span>
+          <span id="inventory-terminal-title">Terminal SSH</span>
+          <button class="btn btn-sm" style="margin-left:auto;width:auto" onclick="inventoryCloseTerminal()">✕ Fechar terminal</button>
+        </div>
+        <div id="inventory-xterm" style="flex:1;min-height:0"></div>
+      </div>
+
+      <div class="table-wrap" id="inventory-table-wrap">
         <table>
           <thead>
             <tr>
@@ -3475,6 +3541,31 @@ tbody tr:hover td.hostname {
   </div>
 </div>
 
+<div id="inv-tree-ctx" style="display:none;position:fixed;z-index:1200;background:var(--panel);border:1px solid var(--border2);min-width:180px;box-shadow:0 8px 24px var(--shadow)">
+  <button class="btn" style="width:100%;border:none;border-bottom:1px solid var(--border);text-align:left" onclick="invTreeAction('new_server')">Novo servidor</button>
+  <button class="btn" style="width:100%;border:none;border-bottom:1px solid var(--border);text-align:left" onclick="invTreeAction('new_web')">Novo acesso web</button>
+  <button class="btn" style="width:100%;border:none;border-bottom:1px solid var(--border);text-align:left" onclick="invTreeAction('new_folder')">Nova pasta</button>
+  <button class="btn" style="width:100%;border:none;border-bottom:1px solid var(--border);text-align:left" onclick="invTreeAction('edit')">Editar</button>
+  <button class="btn btn-danger" style="width:100%;border:none;text-align:left" onclick="invTreeAction('delete')">Excluir</button>
+</div>
+
+<div class="modal-overlay" id="inv-tree-form-overlay" onclick="invTreeCloseForm(event)">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="inv-tree-form-title">Novo item</div>
+        <div class="modal-subtitle">Cadastro sob demanda</div>
+      </div>
+      <button class="modal-close" onclick="invTreeCloseFormDirect()">✕</button>
+    </div>
+    <div class="modal-body" id="inv-tree-form-body"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="invTreeCloseFormDirect()">Cancelar</button>
+      <button class="btn btn-primary" onclick="invTreeSubmitForm()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -3600,6 +3691,7 @@ function save() {
   // Persist to disk via Electron IPC
   window.cmdbAPI.save({ data, tags: allTags, snippets, snipPkgs });
   render();
+  invTreeRender();
   renderDash();
   initDashLinks();
   document.getElementById('inv-badge').textContent = data.length;
@@ -4007,6 +4099,7 @@ function render() {
   const total = data.length;
   document.getElementById('countBadge').textContent = `${rows.length} / ${total} registros`;
   document.getElementById('inv-badge').textContent = total;
+  if (document.getElementById('inv-tree-body')) invTreeRender();
 }
 
 /* ════════════════════════════════════
@@ -4449,9 +4542,6 @@ async function importJSON() {
    SSH LAUNCHER (PuTTY)
 ════════════════════════════════════ */
 function openSSH(i) {
-  // ── Acesso SSH via terminal WebSocket ─────────────────────────────────
-  // Abre modal de login que coleta credenciais e inicia terminal interativo
-  // via WebSocket conectado ao backend Python (asyncssh).
   const it = data[i];
   const host = it.ip || it.hostname;
   if (!host) { toast('Nenhum IP/host configurado', 'warn'); return; }
@@ -4463,7 +4553,33 @@ function openSSH(i) {
     sshPort: it.porta && it.porta !== '3389' ? it.porta : 22,
     sshUser: it.usuario || '',
     _prefillPassword: it.senha || '',
+    onConnect: (server, credentials) => inventoryOpenTerminal(server, credentials),
   });
+}
+
+function inventoryOpenTerminal(server, credentials) {
+  const termPanel = document.getElementById('inventory-terminal-panel');
+  const tableWrap = document.getElementById('inventory-table-wrap');
+  const toolbar = document.getElementById('inventory-table-toolbar');
+  const title = document.getElementById('inventory-terminal-title');
+  const xtermContainer = document.getElementById('inventory-xterm');
+  if (!termPanel || !tableWrap || !xtermContainer) return;
+
+  tableWrap.style.display = 'none';
+  if (toolbar) toolbar.style.display = 'none';
+  termPanel.style.display = 'flex';
+  title.textContent = `SSH — ${server.host}:${server.sshPort || 22}`;
+  SSHTerminal.openEmbedded(xtermContainer, server, credentials);
+}
+
+function inventoryCloseTerminal() {
+  const termPanel = document.getElementById('inventory-terminal-panel');
+  const tableWrap = document.getElementById('inventory-table-wrap');
+  const toolbar = document.getElementById('inventory-table-toolbar');
+  if (termPanel) termPanel.style.display = 'none';
+  if (tableWrap) tableWrap.style.display = 'block';
+  if (toolbar) toolbar.style.display = 'flex';
+  SSHTerminal.close();
 }
 
 /* ════════════════════════════════════
@@ -4813,6 +4929,159 @@ function renderSnipCard(s) {
   </div>`;
 }
 
+
+
+let invTreeCtxNode = null;
+let invTreeFormMode = null;
+let invTreeEditIdx = -1;
+
+function invTreeRender() {
+  const body = document.getElementById('inv-tree-body');
+  if (!body) return;
+  const q = (document.getElementById('inv-tree-search')?.value || '').toLowerCase().trim();
+  const rows = data.map((it, idx) => ({ it, idx })).filter(({it}) => {
+    const txt = `${it.account||''} ${it.ibx||''} ${it.hostname||''} ${it.ip||''} ${it.url||''}`.toLowerCase();
+    return !q || txt.includes(q);
+  });
+
+  const groups = {};
+  rows.forEach(({it, idx}) => {
+    const acct = it.account || 'Sem account';
+    const env = it.ibx || 'Sem ambiente';
+    groups[acct] = groups[acct] || {};
+    groups[acct][env] = groups[acct][env] || [];
+    groups[acct][env].push({it, idx});
+  });
+
+  let html = '';
+  Object.keys(groups).sort().forEach(acct => {
+    html += `<div class="inv-tree-group"><div class="inv-tree-group-title">${escHtml(acct)}</div>`;
+    Object.keys(groups[acct]).sort().forEach(env => {
+      html += `<div class="inv-tree-group-title" style="margin-left:10px;color:var(--text3)">└ ${escHtml(env)}</div>`;
+      groups[acct][env].forEach(({it, idx}) => {
+        const isWeb = (it.type === 'html' || it.classe === 'HTML');
+        const label = it.hostname || it.ip || it.url || 'sem nome';
+        html += `<div class="inv-tree-item" data-idx="${idx}" onclick="invTreeSelect(${idx})" oncontextmenu="invTreeShowMenu(event, ${idx})">
+          <span class="inv-tree-dot" style="background:${isWeb ? 'var(--teal)' : 'var(--green)'}"></span>
+          <span>${escHtml(label)}</span>
+          <span style="margin-left:auto;color:var(--text3)">${isWeb ? 'WEB' : 'SSH'}</span>
+        </div>`;
+      });
+    });
+    html += '</div>';
+  });
+  body.innerHTML = html || '<div class="c-muted" style="padding:8px">Nenhum item encontrado.</div>';
+}
+
+function invTreeSelect(idx) {
+  document.querySelectorAll('.inv-tree-item').forEach(el => el.classList.remove('active'));
+  const el = document.querySelector(`.inv-tree-item[data-idx="${idx}"]`);
+  if (el) el.classList.add('active');
+  const it = data[idx];
+  if (!it) return;
+  if (it.type === 'html' || it.classe === 'HTML') openWebUI(idx);
+  else openSSH(idx);
+}
+
+function invTreeShowMenu(ev, idx) {
+  ev.preventDefault();
+  invTreeCtxNode = idx;
+  const m = document.getElementById('inv-tree-ctx');
+  if (!m) return;
+  m.style.display = 'block';
+  m.style.left = ev.clientX + 'px';
+  m.style.top  = ev.clientY + 'px';
+}
+
+document.addEventListener('click', () => {
+  const m = document.getElementById('inv-tree-ctx');
+  if (m) m.style.display = 'none';
+});
+
+function invTreeAction(action) {
+  const m = document.getElementById('inv-tree-ctx');
+  if (m) m.style.display = 'none';
+  if (action === 'delete') {
+    if (invTreeCtxNode == null) return;
+    delItem(invTreeCtxNode);
+    invTreeRender();
+    return;
+  }
+  if (action === 'edit') {
+    invTreeOpenForm('edit', invTreeCtxNode);
+    return;
+  }
+  if (action === 'new_server') return invTreeOpenForm('server');
+  if (action === 'new_web') return invTreeOpenForm('web');
+  if (action === 'new_folder') return invTreeOpenForm('folder');
+}
+
+function invTreeOpenForm(mode, idx = -1) {
+  invTreeFormMode = mode;
+  invTreeEditIdx = idx;
+  const ov = document.getElementById('inv-tree-form-overlay');
+  const title = document.getElementById('inv-tree-form-title');
+  const body = document.getElementById('inv-tree-form-body');
+  if (!ov || !title || !body) return;
+  const current = idx >= 0 ? (data[idx] || {}) : {};
+
+  if (mode === 'folder') {
+    title.textContent = 'Nova pasta (ambiente)';
+    body.innerHTML = `<div class="field"><label>Nome da pasta/ambiente</label><input id="invf-folder" placeholder="Produção"></div>`;
+  } else {
+    const isWeb = mode === 'web' || (mode === 'edit' && (current.type === 'html' || current.classe === 'HTML'));
+    title.textContent = mode === 'edit' ? 'Editar item' : (isWeb ? 'Novo acesso web' : 'Novo servidor');
+    body.innerHTML = `
+      <div class="form-grid">
+        <div class="field"><label>Account</label><input id="invf-account" value="${escAttr(current.account||'')}"></div>
+        <div class="field"><label>Ambiente</label><input id="invf-ibx" value="${escAttr(current.ibx||'')}"></div>
+        <div class="field"><label>Nome</label><input id="invf-hostname" value="${escAttr(current.hostname||'')}"></div>
+        <div class="field"><label>${isWeb?'URL':'IP/Host'}</label><input id="invf-target" value="${escAttr(isWeb?(current.url||''):(current.ip||''))}"></div>
+        <div class="field"><label>Usuário</label><input id="invf-user" value="${escAttr(current.usuario||'')}"></div>
+        <div class="field"><label>Senha</label><input id="invf-pass" type="password" value="${escAttr(current.senha||'')}"></div>
+      </div>`;
+  }
+
+  ov.classList.add('open');
+}
+
+function invTreeSubmitForm() {
+  if (invTreeFormMode === 'folder') {
+    const folder = document.getElementById('invf-folder').value.trim();
+    if (!folder) return toast('Informe o nome da pasta', 'warn');
+    data.push({ account: 'Nova Account', ibx: folder, hostname: 'novo-host', ip: '', so: 'Linux', classe: 'Servidor', tags: [], obs: '' });
+  } else {
+    const account = document.getElementById('invf-account').value.trim();
+    const ibx = document.getElementById('invf-ibx').value.trim();
+    const hostname = document.getElementById('invf-hostname').value.trim();
+    const target = document.getElementById('invf-target').value.trim();
+    const usuario = document.getElementById('invf-user').value.trim();
+    const senha = document.getElementById('invf-pass').value;
+    if (!hostname || !target) return toast('Preencha nome e destino', 'warn');
+
+    let obj = { account, ibx, hostname, usuario, senha, tags: [], obs: '' };
+    const isWeb = invTreeFormMode === 'web' || (invTreeFormMode === 'edit' && data[invTreeEditIdx] && (data[invTreeEditIdx].type === 'html' || data[invTreeEditIdx].classe === 'HTML'));
+    if (isWeb) obj = { ...obj, type:'html', classe:'HTML', url: target, ip: target, so:'Web' };
+    else obj = { ...obj, classe:'Servidor', so:'Linux', ip: target, porta: '22' };
+
+    if (invTreeFormMode === 'edit' && invTreeEditIdx >= 0) data[invTreeEditIdx] = { ...data[invTreeEditIdx], ...obj };
+    else data.push(obj);
+  }
+
+  save();
+  render();
+  invTreeRender();
+  invTreeCloseFormDirect();
+}
+
+function invTreeCloseForm(e) {
+  if (e.target.id === 'inv-tree-form-overlay') invTreeCloseFormDirect();
+}
+
+function invTreeCloseFormDirect() {
+  const ov = document.getElementById('inv-tree-form-overlay');
+  if (ov) ov.classList.remove('open');
+}
 
 /* ══════════════════════ NAVIGATION VAULT JS ══════════════════════ */
 let vSelected    = null;   // { it, idx }

@@ -172,7 +172,12 @@ const SSHAccessModal = (() => {
 
       // Fecha o modal de login e abre o terminal
       overlay.remove();
-      SSHTerminal.open({ ...server, host, sshPort: port }, credentials);
+      const payload = { ...server, host, sshPort: port };
+      if (typeof server.onConnect === 'function') {
+        server.onConnect(payload, credentials);
+      } else {
+        SSHTerminal.open(payload, credentials);
+      }
     });
 
     // Enter no campo de senha conecta diretamente
